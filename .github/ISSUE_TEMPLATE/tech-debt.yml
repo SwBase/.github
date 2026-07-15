@@ -8,10 +8,12 @@ body:
     attributes:
       label: Description
       value: |
-        # Summary
-        Todo add info
-
-        # Acceptance criteria
-        - [ ]
+        ## Summary
+        
+        <!-- Describe the change or task -->
+        
+        ## Acceptance Criteria
+        
+        - [ ]  <!-- Criterion 1 -->
     validations:
       required: true
