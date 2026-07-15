@@ -1,0 +1,23 @@
+- name: bug
+  color: "d73a4a"
+  description: Something isn't working
+
+- name: feature
+  color: "0e8a16"
+  description: New feature
+
+- name: tech-debt
+  color: "fbca04"
+  description: Technical debt
+
+- name: priority:high
+  color: "b60205"
+  description: High priority
+
+- name: frontend
+  color: "1d76db"
+  description: Frontend work
+
+- name: backend
+  color: "5319e7"
+  description: Backend work

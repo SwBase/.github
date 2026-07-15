@@ -1,0 +1,31 @@
+name: Technical Debt
+description: Improve or clean up existing code.
+title: "[Tech Debt]: "
+labels: ["tech-debt"]
+body:
+  - type: textarea
+    id: current
+    attributes:
+      label: Current Situation
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposed
+    attributes:
+      label: Proposed Improvement
+    validations:
+      required: true
+
+  - type: textarea
+    id: impact
+    attributes:
+      label: Impact
+
+  - type: textarea
+    id: tasks
+    attributes:
+      label: Tasks
+      placeholder: |
+        - [ ]
+        - [ ]
