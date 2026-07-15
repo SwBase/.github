@@ -4,28 +4,14 @@ title: "[Tech Debt]: "
 labels: ["tech-debt"]
 body:
   - type: textarea
-    id: current
+    id: description
     attributes:
-      label: Current Situation
+      label: Description
+      value: |
+        # Summary
+        Todo add info
+
+        # Acceptance criteria
+        - [ ]
     validations:
       required: true
-
-  - type: textarea
-    id: proposed
-    attributes:
-      label: Proposed Improvement
-    validations:
-      required: true
-
-  - type: textarea
-    id: impact
-    attributes:
-      label: Impact
-
-  - type: textarea
-    id: tasks
-    attributes:
-      label: Tasks
-      placeholder: |
-        - [ ]
-        - [ ]
