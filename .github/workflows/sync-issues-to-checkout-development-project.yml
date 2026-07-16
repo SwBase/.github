@@ -11,10 +11,10 @@ name: Sync Issues To Checkout Development Project
 
 on:
   workflow_dispatch:
-  issues:
-    types: [opened, reopened, labeled]
-  schedule:
-    - cron: "*/5 * * * *" # every 5 minutes (lowest interval GitHub Actions allows)
+#  issues:
+#    types: [opened, reopened, labeled]
+#  schedule:
+#    - cron: "*/5 * * * *" # every 5 minutes (lowest interval GitHub Actions allows)
 
 concurrency:
   group: sync-issues-to-checkout-development-project
