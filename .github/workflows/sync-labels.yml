@@ -1,21 +1,92 @@
 name: Sync Labels
 
+# Syncs the labels from .github/labels.yml to ALL (non-archived) repos in the
+# SwBase org. Create-or-update: existing labels are left untouched and nothing
+# is deleted.
+#
+# Uses the same GitHub App as the project sync. The app needs permission
+# Issues: Read and write (labels fall under Issues) plus Metadata: Read to list
+# the repos.
+
 on:
   workflow_dispatch:
   push:
     paths:
       - ".github/labels.yml"
+      - ".github/workflows/sync-labels.yml"
+
+env:
+  ORG: SwBase
+  LABELS_FILE: .github/labels.yml
 
 jobs:
   sync:
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v4
 
-      - uses: crazy-max/ghaction-github-labeler@v5
+      - name: Generate app token
+        id: app-token
+        uses: actions/create-github-app-token@v2
         with:
-          yaml-file: .github/labels.yml
-          skip-delete: false
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          owner: ${{ env.ORG }}
+
+      - name: Sync labels to all repos
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          set -euo pipefail
+
+          if [[ ! -f "$LABELS_FILE" ]]; then
+            echo "$LABELS_FILE not found" >&2
+            exit 1
+          fi
+
+          # --- Parse labels.yml (list of name/color/description blocks) ---
+          # Each label is stored as "name<TAB>color<TAB>description".
+          strip_quotes() { local v="$1"; v="${v#[\"\']}"; v="${v%[\"\']}"; printf '%s' "$v"; }
+
+          labels=()
+          name='' color='' description=''
+          flush() { [[ -n "$name" ]] && labels+=("$name"$'\t'"$color"$'\t'"$description"); return 0; }
+
+          while IFS= read -r line || [[ -n "$line" ]]; do
+            if [[ "$line" =~ ^[[:space:]]*-[[:space:]]*name:[[:space:]]*(.+)$ ]]; then
+              flush
+              name="$(strip_quotes "$(echo "${BASH_REMATCH[1]}" | sed 's/[[:space:]]*$//')")"
+              color=''; description=''
+            elif [[ "$line" =~ ^[[:space:]]*color:[[:space:]]*(.+)$ ]]; then
+              color="$(strip_quotes "$(echo "${BASH_REMATCH[1]}" | sed 's/[[:space:]]*$//')")"
+            elif [[ "$line" =~ ^[[:space:]]*description:[[:space:]]*(.+)$ ]]; then
+              description="$(strip_quotes "$(echo "${BASH_REMATCH[1]}" | sed 's/[[:space:]]*$//')")"
+            fi
+          done < "$LABELS_FILE"
+          flush
+
+          echo "Labels found: ${#labels[@]}"
+
+          # --- Fetch all (non-archived) repos in the org ---
+          mapfile -t repos < <(gh repo list "$ORG" --limit 1000 --no-archived --json nameWithOwner --jq '.[].nameWithOwner')
+          if [[ ${#repos[@]} -eq 0 ]]; then
+            echo "No repos found for org '$ORG'" >&2
+            exit 1
+          fi
+
+          echo -e "Repos found: ${#repos[@]}\n"
+
+          # --- Sync labels to each repo ---
+          for repo in "${repos[@]}"; do
+            echo "==> $repo"
+            for label in "${labels[@]}"; do
+              IFS=$'\t' read -r l_name l_color l_description <<< "$label"
+              gh label create "$l_name" \
+                --repo "$repo" \
+                --color "$l_color" \
+                --description "$l_description" \
+                --force
+            done
+          done
+
+          echo -e "\nDone. Labels synced to ${#repos[@]} repo(s)."

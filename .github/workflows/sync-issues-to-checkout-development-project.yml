@@ -1,0 +1,70 @@
+name: Sync Issues To Checkout Development Project
+
+# Adds every issue across the whole SwBase org with the label `checkout-development`
+# to project 11 (Checkout - Development). Repo-independent, so it is not affected
+# by the per-repo limit of the built-in "Auto-add to project" workflow.
+#
+# Uses a GitHub App for authentication (not tied to a single user). Requires two
+# secrets (see README): APP_ID and APP_PRIVATE_KEY. The app must be installed on
+# the org with permissions Issues: Read, Metadata: Read and Projects: Read and
+# write. The default GITHUB_TOKEN cannot write org projects or search org-wide.
+
+on:
+  workflow_dispatch:
+  issues:
+    types: [opened, reopened, labeled]
+  schedule:
+    - cron: "*/5 * * * *" # every 5 minutes (lowest interval GitHub Actions allows)
+
+concurrency:
+  group: sync-issues-to-checkout-development-project
+  cancel-in-progress: true
+
+env:
+  ORG: SwBase
+  PROJECT_NUMBER: "11"
+  LABEL: checkout-development
+  STATE: open # open | closed | all
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate app token
+        id: app-token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          owner: ${{ env.ORG }}
+
+      - name: Add matching issues to project
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          set -euo pipefail
+
+          echo "Searching for $STATE issues with label '$LABEL' in org '$ORG'..."
+          mapfile -t urls < <(
+            gh search issues \
+              --owner "$ORG" \
+              --label "$LABEL" \
+              --state "$STATE" \
+              --limit 500 \
+              --json url \
+              --jq '.[].url'
+          )
+
+          echo "Found: ${#urls[@]} issue(s)."
+
+          added=0
+          for url in "${urls[@]}"; do
+            # item-add is idempotent: an already-added issue is not duplicated.
+            if gh project item-add "$PROJECT_NUMBER" --owner "$ORG" --url "$url" >/dev/null 2>&1; then
+              added=$((added + 1))
+            else
+              echo "::warning::Could not add issue: $url"
+            fi
+          done
+
+          echo "Done. $added of ${#urls[@]} issue(s) processed in project $PROJECT_NUMBER."
