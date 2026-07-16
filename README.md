@@ -36,6 +36,20 @@ deleted.
   - `push` on `.github/labels.yml` or the workflow file itself.
   - `workflow_dispatch` — run manually.
 
+## Running manually
+
+Both workflows can be triggered by hand with the GitHub CLI (`workflow_dispatch`):
+
+```bash
+# Sync issues to the Checkout - Development project
+gh workflow run sync-issues-to-checkout-development-project.yml --repo SwBase/.github
+
+# Sync labels to all repos in the org
+gh workflow run sync-labels.yml --repo SwBase/.github
+```
+
+Follow a run afterwards with `gh run watch --repo SwBase/.github`.
+
 ## Authentication — GitHub App
 
 Both workflows authenticate through a single GitHub App (not tied to any one
