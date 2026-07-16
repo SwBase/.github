@@ -10,10 +10,10 @@ name: Sync Labels
 
 on:
   workflow_dispatch:
-#  push:
-#    paths:
-#      - ".github/labels.yml"
-#      - ".github/workflows/sync-labels.yml"
+  push:
+    paths:
+      - ".github/labels.yml"
+      - ".github/workflows/sync-labels.yml"
 
 env:
   ORG: SwBase
