@@ -1,7 +1,7 @@
-name: Technical Debt
-description: Improve or clean up existing code.
-title: "[Tech Debt]: "
-labels: ["tech-debt", "checkout-development"]
+name: Finding
+description: Finding in existing code.
+title: "[Finding]: "
+labels: ["finding", "checkout-development"]
 body:
   - type: textarea
     id: description
@@ -11,6 +11,10 @@ body:
         ## Summary
         
         <!-- Describe the change or task -->
+        
+        ## Reproduction Steps (Optional)
+        
+        - [ ]  <!-- Step 1 -->
         
         ## Acceptance Criteria
         
